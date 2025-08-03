@@ -1,0 +1,77 @@
+/* Blog Detail Specific Styles */
+.blog-detail-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f0f0f 0%, #1a1a2e 50%, #0f0f0f 100%);
+  color: white;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.blog-detail-article h2 {
+  color: white;
+  font-size: 1.8rem;
+  margin: 2rem 0 1rem 0;
+  font-weight: 700;
+}
+
+.blog-detail-article h3 {
+  color: #667eea;
+  font-size: 1.4rem;
+  margin: 1.5rem 0 0.75rem 0;
+  font-weight: 600;
+}
+
+.blog-detail-article h4 {
+  color: #a0a0a0;
+  font-size: 1.2rem;
+  margin: 1.25rem 0 0.5rem 0;
+  font-weight: 600;
+}
+
+.blog-detail-article p {
+  color: #d0d0d0;
+  line-height: 1.7;
+  margin-bottom: 1.25rem;
+  font-size: 1.1rem;
+}
+
+.blog-detail-article ul,
+.blog-detail-article ol {
+  color: #d0d0d0;
+  margin: 1rem 0 1.5rem 0;
+  padding-left: 2rem;
+}
+
+.blog-detail-article li {
+  margin-bottom: 0.5rem;
+  line-height: 1.6;
+}
+
+.blog-detail-article strong {
+  color: #667eea;
+  font-weight: 600;
+}
+
+.blog-detail-article pre {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+  overflow-x: auto;
+  backdrop-filter: blur(10px);
+}
+
+.blog-detail-article code {
+  color: #87ceeb;
+  font-family: "Courier New", monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
