@@ -17,7 +17,7 @@ app.use(cookieParser());
 
 app.use(
   cors({
-    origin: "http://localhost:5173", // Geliştirme sırasında gerekli
+    origin: "http://localhost:5173", // Render'a deploy ettiysen burayı production domain ile değiştir
     credentials: true,
   })
 );
@@ -26,10 +26,10 @@ app.use(
 app.use("/api/blogs", blogRoutes);
 app.use("/api/auth", authRoutes);
 
-// React'ın derlenmiş (build) dosyalarını sun
+// React'ın build edilmiş dosyalarını sun
 app.use(express.static(path.join(__dirname, "../Frontend/dist")));
 
-// Diğer tüm route'ları React'a yönlendirir
+// Tüm diğer route'ları index.html'e yönlendir (React Router için)
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "../Frontend/dist", "index.html"));
 });
