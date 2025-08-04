@@ -11,7 +11,7 @@ import Sidebar from "./components/Sidebar";
 import DeleteModal from "./components/DeleteModal";
 import "./components/Style/AdminPanel.css";
 
-const API_URL = "https://savteksitesi.onrender.com/api/login";
+const API_URL = "https://savteksitesi.onrender.com/api/auth";
 
 // Form reducer for better state managementasdasd
 const initialFormState = {
