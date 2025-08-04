@@ -29,8 +29,8 @@ app.use("/api/auth", authRoutes);
 // React'ın derlenmiş (build) dosyalarını sun
 app.use(express.static(path.join(__dirname, "../Frontend/dist")));
 
-// ⚠️ ÖNEMLİ: React Router'ın çalışması için tüm bilinmeyen rotaları index.html'e yönlendir
-app.get("*", (req, res) => {
+// Diğer tüm route'ları React'a yönlendir
+app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "../Frontend/dist", "index.html"));
 });
 
