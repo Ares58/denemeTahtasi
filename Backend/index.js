@@ -15,9 +15,14 @@ const PORT = process.env.PORT || 5000;
 app.use(express.json());
 app.use(cookieParser());
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://savteksitesi.onrender.com",
+];
+
 app.use(
   cors({
-    origin: "http://localhost:5173", // Render'a deploy ettiysen burayı production domain ile değiştir
+    origin: allowedOrigins,
     credentials: true,
   })
 );

@@ -53,6 +53,10 @@ router.get("/verify", (req, res) => {
   }
 });
 
+router.get("/", (req, res) => {
+  res.send("Auth router aktif");
+});
+
 // Logout endpointi (cookie temizler)
 router.post("/logout", (req, res) => {
   res.clearCookie("token", {
