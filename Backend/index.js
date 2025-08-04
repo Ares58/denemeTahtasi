@@ -29,7 +29,7 @@ app.use("/api/auth", authRoutes);
 // React'ın derlenmiş (build) dosyalarını sun
 app.use(express.static(path.join(__dirname, "../Frontend/dist")));
 
-// Diğer tüm route'ları React'a yönlendir
+// Diğer tüm route'ları React'a yönlendirir
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "../Frontend/dist", "index.html"));
 });

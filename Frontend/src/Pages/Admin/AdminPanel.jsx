@@ -13,7 +13,7 @@ import "./components/Style/AdminPanel.css";
 
 const API_URL = "https://savteksitesi.onrender.com/api/blogs";
 
-// Form reducer for better state management
+// Form reducer for better state managementasdasd
 const initialFormState = {
   title: "",
   slug: "",

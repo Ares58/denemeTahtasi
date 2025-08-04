@@ -44,7 +44,7 @@ const BlogPage = () => {
     return particles;
   };
 
-  // Kategorileri backend’den gelen bloglardan oluştur
+  // Kategorileri backend’den gelen bloglardan oluşturasdasf
   const categories = useMemo(() => {
     return ["Tümü", ...new Set(blogPosts.map((post) => post.category))];
   }, [blogPosts]);
