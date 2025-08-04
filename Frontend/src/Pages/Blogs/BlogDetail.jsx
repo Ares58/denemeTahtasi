@@ -29,15 +29,20 @@ const BlogDetail = () => {
   useEffect(() => {
     const fetchBlog = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/blogs/${slug}`);
+        const res = await fetch(
+          `https://savteksitesi.onrender.com/api/blogs/${slug}`
+        );
         if (!res.ok) throw new Error("Blog bulunamadı");
         const data = await res.json();
         setBlog(data);
 
         // Görüntülenme sayısını artır
-        await fetch(`http://localhost:5000/api/blogs/increment-views/${slug}`, {
-          method: "POST",
-        });
+        await fetch(
+          `https://savteksitesi.onrender.com/api/blogs/increment-views/${slug}`,
+          {
+            method: "POST",
+          }
+        );
       } catch (error) {
         console.error("Blog yükleme hatası:", error);
         setBlog(null);
@@ -70,7 +75,7 @@ const BlogDetail = () => {
     if (liked) return; // İkinci kez beğenilmesin
     try {
       const res = await fetch(
-        `http://localhost:5000/api/blogs/increment-likes/${slug}`,
+        `https://savteksitesi.onrender.com/api/blogs/increment-likes/${slug}`,
         {
           method: "POST",
         }

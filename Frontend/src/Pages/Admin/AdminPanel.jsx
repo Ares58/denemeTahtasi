@@ -11,7 +11,7 @@ import Sidebar from "./components/Sidebar";
 import DeleteModal from "./components/DeleteModal";
 import "./components/Style/AdminPanel.css";
 
-const API_URL = "http://localhost:5000/api/blogs";
+const API_URL = "https://savteksitesi.onrender.com/api/blogs";
 
 // Form reducer for better state management
 const initialFormState = {
