@@ -3,7 +3,7 @@ const router = express.Router();
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-const JWT_SECRET = process.env.JWT_SECRET || "gizligizli";
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // Sabit admin kullanıcı (şifre "1234")
 const adminUser = {

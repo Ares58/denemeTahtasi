@@ -6,14 +6,14 @@ function ProtectedRoute({ children }) {
   const isAuthenticated = useAuth();
 
   if (isAuthenticated === null) {
-    return <div>Yükleniyor...</div>; // veya bir spinner
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <span className="text-lg text-gray-600">Yükleniyor...</span>
+      </div>
+    );
   }
 
-  if (!isAuthenticated) {
-    return <Navigate to="/admin/login" />;
-  }
-
-  return children;
+  return isAuthenticated ? children : <Navigate to="/admin/login" />;
 }
 
 export default ProtectedRoute;

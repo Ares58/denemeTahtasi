@@ -27,6 +27,24 @@ const BlogPage = () => {
       });
   }, []);
 
+  const renderLoadingParticles = () => {
+    const particles = [];
+    for (let i = 0; i < 25; i++) {
+      particles.push(
+        <div
+          key={i}
+          className="loading-particle"
+          style={{
+            left: `${Math.random() * 100}%`,
+            animationDelay: `${Math.random() * 4}s`,
+            animationDuration: `${Math.random() * 2 + 3}s`,
+          }}
+        />
+      );
+    }
+    return particles;
+  };
+
   // Kategorileri backend’den gelen bloglardan oluştur
   const categories = useMemo(() => {
     return ["Tümü", ...new Set(blogPosts.map((post) => post.category))];
@@ -55,12 +73,14 @@ const BlogPage = () => {
   };
 
   const BlogCard = ({ post }) => (
-    <article
-      className="blog-card"
-      onClick={() => handleBlogClick(post.slug || post._id)}
-    >
+    <article className="blog-card" onClick={() => handleBlogClick(post.slug)}>
       <div className="blog-card-image-container">
-        <img src={post.image} alt={post.title} className="blog-card-image" />
+        {post.image ? (
+          <img src={post.image} alt={post.title} className="blog-card-image" />
+        ) : (
+          <div className="blog-card-image-placeholder">Görsel Yok</div>
+        )}
+
         <div className="blog-card-category">
           <span>{post.category}</span>
         </div>
@@ -75,12 +95,14 @@ const BlogPage = () => {
           <div className="blog-card-meta-item">
             <Calendar size={16} />
             <span>
-              {post.date ? new Date(post.date).toLocaleDateString("tr-TR") : ""}
+              {post.createdAt
+                ? new Date(post.createdAt).toLocaleDateString("tr-TR", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })
+                : ""}
             </span>
-          </div>
-          <div className="blog-card-meta-item">
-            <Clock size={16} />
-            <span>{post.readTime || ""}</span>
           </div>
         </div>
 
@@ -108,7 +130,55 @@ const BlogPage = () => {
     return (
       <div className="blog-container">
         <Navbar />
-        <p style={{ textAlign: "center", marginTop: 50 }}>Yükleniyor...</p>
+        <div className="loading-container">
+          <div className="loading-particles">{renderLoadingParticles()}</div>
+
+          <div className="loading-content">
+            <div className="loading-badge">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="m8 3 4 8 5-5v11H3V6l5 5z" />
+              </svg>
+              <span>Blog Yükleniyor</span>
+            </div>
+
+            <div className="loading-spinner-container">
+              <div className="loading-spinner"></div>
+            </div>
+
+            <h2 className="loading-title">SAVTEK BLOG</h2>
+            <p className="loading-text">
+              En güncel teknoloji yazıları yükleniyor...
+            </p>
+
+            <div className="loading-tips">
+              <div className="loading-tips-title">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="m9 12 2 2 4-4" />
+                </svg>
+                İpucu
+              </div>
+              <p className="loading-tips-text">
+                Arama özelliğini kullanarak istediğiniz konudaki yazıları
+                kolayca bulabilirsiniz.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -211,28 +281,26 @@ const BlogPage = () => {
             </p>
           </div>
         )}
-
-        {/* Newsletter Section */}
-        <div className="newsletter">
-          <div className="newsletter-container">
-            <h2 className="newsletter-title">Yeni yazılardan haberdar ol</h2>
-
-            <p className="newsletter-text">
-              E-posta adresinizi girerek yeni blog yazılarımızdan anında
-              haberdar olabilirsiniz.
+      </div>
+      {/* Newsletter Section */}
+      <footer id="contact" className="footer">
+        <div className="container">
+          <div className="footer-content">
+            <div className="footer-title">
+              Ege'nin en büyük savunma teknolojileri topluluğu.
+            </div>
+            <p className="footer-description">
+              Sizleri de yanımızda görmek isteriz
             </p>
-
-            <div className="newsletter-form">
-              <input
-                type="email"
-                placeholder="E-posta adresiniz"
-                className="newsletter-input"
-              />
-              <button className="newsletter-button">Abone Ol</button>
+            <div className="footer-links">
+              <a href="#">Gizlilik</a>
+              <a href="#">Kullanım Koşulları</a>
+              <a href="#">Destek</a>
+              <a href="#">İletişim</a>
             </div>
           </div>
         </div>
-      </div>
+      </footer>
     </div>
   );
 };

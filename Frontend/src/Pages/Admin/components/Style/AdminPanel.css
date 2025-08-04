@@ -1,0 +1,45 @@
+.admin-panel {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f0f0f 0%, #1a1a2e 50%, #0f0f0f 100%);
+  padding: 2rem;
+  padding-top: 6rem; /* Navbar için boşluk */
+}
+
+.admin-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+.main-content {
+  min-height: 80vh;
+}
+
+/* Navbar'ın admin panel'i etkilememesi için */
+.admin-panel .sidebar {
+  position: sticky !important;
+  top: calc(2rem + 80px); /* Navbar yüksekliği + margin */
+  z-index: 10;
+}
+
+/* Responsive için */
+@media (max-width: 768px) {
+  .admin-panel {
+    padding: 1rem;
+    padding-top: 5rem; /* Mobile navbar için */
+  }
+
+  .admin-container {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .admin-panel .sidebar {
+    position: relative !important;
+    top: auto;
+    width: 100%;
+  }
+}

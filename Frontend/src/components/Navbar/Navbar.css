@@ -37,8 +37,7 @@
 /* Logo Color Override - Mask Method for Transparent PNG */
 .logo,
 .loading-logo,
-.footer-logo,
-[class*="logo"] {
+.footer-logo {
   background: var(--primary-gradient) !important;
   -webkit-mask: url("../../assets/savtekLogo.png") no-repeat center;
   mask: url("../../assets/savtekLogo.png") no-repeat center;

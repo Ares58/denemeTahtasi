@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import MDEditor from "@uiw/react-md-editor";
 
 import {
   ArrowLeft,
@@ -26,155 +27,26 @@ const BlogDetail = () => {
 
   // Blog verilerini id'ye göre getir
   useEffect(() => {
-    const getBlogBySlug = (slug) => {
-      // Burada normalde API'den veri çekersiniz
-      // Şimdilik örnek veri döndürüyoruz
-      const blogs = [
-        {
-          id: 1,
-          title: "React ile Modern Web Geliştirme",
-          slug: "react-ile-modern-web-gelistirme",
+    const fetchBlog = async () => {
+      try {
+        const res = await fetch(`http://localhost:5000/api/blogs/${slug}`);
+        if (!res.ok) throw new Error("Blog bulunamadı");
+        const data = await res.json();
+        setBlog(data);
 
-          excerpt:
-            "React'ın en son özelliklerini kullanarak modern web uygulamaları geliştirme rehberi.",
-          content: `
-            <h2>React ile Modern Web Geliştirme</h2>
-            
-            <p>React, günümüzde web geliştirme dünyasının en popüler JavaScript kütüphanelerinden biridir. Facebook tarafından geliştirilen bu güçlü araç, kullanıcı arayüzleri oluşturmak için component-based bir yaklaşım sunar.</p>
-            
-            <h3>React'ın Avantajları</h3>
-            
-            <p>React'ın sunduğu başlıca avantajlar şunlardır:</p>
-            
-            <ul>
-              <li><strong>Virtual DOM:</strong> Performans optimizasyonu için sanal DOM kullanır</li>
-              <li><strong>Component-Based:</strong> Yeniden kullanılabilir bileşenler oluşturmanızı sağlar</li>
-              <li><strong>JSX:</strong> HTML benzeri syntax ile JavaScript yazmayı kolaylaştırır</li>
-              <li><strong>Hooks:</strong> Fonksiyonel componentlerde state yönetimi imkanı sunar</li>
-            </ul>
-            
-            <h3>Modern React Özellikleri</h3>
-            
-            <p>React'ın son sürümlerinde gelen önemli özellikler:</p>
-            
-            <h4>1. React Hooks</h4>
-            <p>Hooks, fonksiyonel componentlerde state ve lifecycle metodlarını kullanmanıza olanak tanır. En yaygın kullanılan hooks:</p>
-            
-            <pre><code>import React, { useState, useEffect } from 'react';
-
-function ExampleComponent() {
-  const [count, setCount] = useState(0);
-  
-  useEffect(() => {
-    document.title = \`Count: \${count}\`;
-  }, [count]);
-  
-  return (
-    &lt;div&gt;
-      &lt;p&gt;Count: {count}&lt;/p&gt;
-      &lt;button onClick={() =&gt; setCount(count + 1)}&gt;
-        Increment
-      &lt;/button&gt;
-    &lt;/div&gt;
-  );
-}</code></pre>
-            
-            <h4>2. Context API</h4>
-            <p>Context API, prop drilling problemini çözmek için kullanılan güçlü bir araçtır. Global state yönetimi için Redux'a alternatif olarak kullanılabilir.</p>
-            
-            <h4>3. Suspense ve Lazy Loading</h4>
-            <p>React Suspense, asenkron işlemler için loading state'lerini yönetmeyi kolaylaştırır:</p>
-            
-            <pre><code>import React, { Suspense, lazy } from 'react';
-
-const LazyComponent = lazy(() =&gt; import('./LazyComponent'));
-
-function App() {
-  return (
-    &lt;Suspense fallback={&lt;div&gt;Loading...&lt;/div&gt;}&gt;
-      &lt;LazyComponent /&gt;
-    &lt;/Suspense&gt;
-  );
-}</code></pre>
-            
-            <h3>Best Practices</h3>
-            
-            <p>React projelerinde dikkat edilmesi gereken en iyi uygulamalar:</p>
-            
-            <ol>
-              <li><strong>Component Yapısı:</strong> Küçük, tek sorumluluğa sahip componentler oluşturun</li>
-              <li><strong>State Yönetimi:</strong> Local state mı global state mi karar verin</li>
-              <li><strong>Performance:</strong> React.memo, useMemo, useCallback kullanarak performans optimize edin</li>
-              <li><strong>Error Boundaries:</strong> Hata yakalama için Error Boundary componentleri kullanın</li>
-            </ol>
-            
-            <h3>Sonuç</h3>
-            
-            <p>React, modern web geliştirme için güçlü araçlar sunan, sürekli gelişen bir kütüphanedir. Doğru kullanıldığında, hızlı, ölçeklenebilir ve bakımı kolay web uygulamaları geliştirebilirsiniz.</p>
-            
-            <p>Bu yazıda React'ın temel özelliklerini ve modern geliştirme tekniklerini ele aldık. Daha detaylı bilgi için React'ın resmi dokümantasyonunu incelemenizi öneririm.</p>
-          `,
-          author: "Ahmet Yılmaz",
-          date: "2024-08-01",
-          category: "Teknoloji",
-          readTime: "8 dk",
-          views: 1250,
-          likes: 45,
-          image:
-            "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=1200&h=600&fit=crop",
-          tags: ["React", "JavaScript", "Web Development", "Frontend"],
-        },
-        {
-          id: 2,
-          slug: "css-grid-ve-flexbox-karsilastirmasi",
-          title: "CSS Grid ve Flexbox Karşılaştırması",
-          excerpt:
-            "Modern CSS layout sistemleri olan Grid ve Flexbox'ın avantajları ve kullanım alanları.",
-          content: `
-            <h2>CSS Grid ve Flexbox Karşılaştırması</h2>
-            
-            <p>Modern web tasarımında layout oluşturmak için iki güçlü araç vardır: CSS Grid ve Flexbox. Her ikisi de farklı senaryolar için optimize edilmiştir.</p>
-            
-            <h3>Flexbox - Tek Boyutlu Layout</h3>
-            <p>Flexbox, tek boyutlu (row veya column) layout'lar için idealdir.</p>
-            
-            <h3>CSS Grid - İki Boyutlu Layout</h3>
-            <p>CSS Grid, karmaşık iki boyutlu layout'lar için mükemmeldir.</p>
-            
-            <h4>Flexbox Kullanım Alanları:</h4>
-            <ul>
-              <li>Navigation bar'lar</li>
-              <li>Card layout'ları</li>
-              <li>Centered content</li>
-              <li>Equal height columns</li>
-            </ul>
-            
-            <h4>CSS Grid Kullanım Alanları:</h4>
-            <ul>
-              <li>Page layout'ları</li>
-              <li>Complex grid systems</li>
-              <li>Magazine-style layouts</li>
-              <li>Dashboard designs</li>
-            </ul>
-          `,
-          author: "Ayşe Demir",
-          date: "2024-07-28",
-          category: "Tasarım",
-          readTime: "6 dk",
-          views: 890,
-          likes: 32,
-          image:
-            "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1200&h=600&fit=crop",
-          tags: ["CSS", "Layout", "Design", "Frontend"],
-        },
-      ];
-
-      return blogs.find((blog) => blog.slug === slug);
+        // Görüntülenme sayısını artır
+        await fetch(`http://localhost:5000/api/blogs/increment-views/${slug}`, {
+          method: "POST",
+        });
+      } catch (error) {
+        console.error("Blog yükleme hatası:", error);
+        setBlog(null);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    const foundBlog = getBlogBySlug(slug);
-    setBlog(foundBlog);
-    setLoading(false);
+    fetchBlog();
   }, [slug]);
 
   const handleBack = () => {
@@ -194,8 +66,21 @@ function App() {
     }
   };
 
-  const handleLike = () => {
-    setLiked(!liked);
+  const handleLike = async () => {
+    if (liked) return; // İkinci kez beğenilmesin
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/blogs/increment-likes/${slug}`,
+        {
+          method: "POST",
+        }
+      );
+      const updatedBlog = await res.json();
+      setBlog(updatedBlog);
+      setLiked(true);
+    } catch (error) {
+      console.error("Beğeni hatası:", error);
+    }
   };
 
   const handleBookmark = () => {
@@ -349,16 +234,34 @@ function App() {
           margin: "2rem 1rem",
         }}
       >
-        <img
-          src={blog.image}
-          alt={blog.title}
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            borderRadius: "1.5rem",
-          }}
-        />
+        {blog.image ? (
+          <img
+            src={blog.image}
+            alt={blog.title}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              borderRadius: "1.5rem",
+            }}
+          />
+        ) : (
+          <div
+            style={{
+              width: "100%",
+              height: "100%",
+              backgroundColor: "#2d2d2d",
+              color: "#aaa",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: "1.5rem",
+              fontSize: "1.2rem",
+              fontStyle: "italic",
+            }}
+          ></div>
+        )}
+
         <div
           style={{
             position: "absolute",
@@ -469,7 +372,15 @@ function App() {
               }}
             >
               <Calendar size={18} />
-              <span>{new Date(blog.date).toLocaleDateString("tr-TR")}</span>
+              <span>
+                {blog.createdAt
+                  ? new Date(blog.createdAt).toLocaleDateString("tr-TR", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })
+                  : ""}
+              </span>
             </div>
             <div
               style={{
@@ -515,7 +426,7 @@ function App() {
               }}
             >
               <Heart size={16} fill={liked ? "currentColor" : "none"} />
-              <span>{blog.likes + (liked ? 1 : 0)}</span>
+              <span>{blog.likes}</span>
             </button>
             <button
               onClick={handleBookmark}
@@ -585,8 +496,7 @@ function App() {
           ))}
         </div>
 
-        {/* Article Content */}
-        <article
+        <div
           className="blog-detail-article"
           style={{
             background: "rgba(255, 255, 255, 0.02)",
@@ -596,8 +506,12 @@ function App() {
             padding: "2.5rem",
             marginBottom: "3rem",
           }}
-          dangerouslySetInnerHTML={{ __html: blog.content }}
-        />
+        >
+          <MDEditor.Markdown
+            source={blog.content}
+            style={{ backgroundColor: "transparent" }}
+          />
+        </div>
 
         {/* Author Card */}
         <div
