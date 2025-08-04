@@ -13,19 +13,16 @@ const BlogPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Tümü");
 
-  useEffect(() => {
-    // Backend API'den blogları çek
-    axios
-      .get("http://localhost:5000/api/blogs")
-      .then((res) => {
-        setBlogPosts(res.data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Bloglar alınamadı:", err);
-        setLoading(false);
-      });
-  }, []);
+  axios
+    .get("https://savteksitesi.onrender.com/api/blogs")
+    .then((res) => {
+      setBlogPosts(res.data);
+      setLoading(false);
+    })
+    .catch((err) => {
+      console.error("Bloglar alınamadı:", err);
+      setLoading(false);
+    });
 
   const renderLoadingParticles = () => {
     const particles = [];
