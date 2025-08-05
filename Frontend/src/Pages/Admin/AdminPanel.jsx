@@ -1,4 +1,4 @@
-import React, { useState, useReducer } from "react";
+import React, { useState, useReducer, useEffect } from "react";
 import axios from "axios";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { LogOut } from "lucide-react";
@@ -11,9 +11,12 @@ import Sidebar from "./components/Sidebar";
 import DeleteModal from "./components/DeleteModal";
 import "./components/Style/AdminPanel.css";
 
-const API_URL = "https://savteksitesi.onrender.com/api/auth";
+// API URLs - Doğru endpoint'ler
+const API_BASE_URL = "https://savteksitesi.onrender.com";
+const BLOG_API_URL = `${API_BASE_URL}/api/blogs`;
+const AUTH_API_URL = `${API_BASE_URL}/api/auth`;
 
-// Form reducer for better state managementasdasd
+// Form reducer for better state management
 const initialFormState = {
   title: "",
   slug: "",
@@ -55,6 +58,8 @@ const BlogAdminPanel = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(null);
   const [formData, dispatchForm] = useReducer(formReducer, initialFormState);
   const [error, setError] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
 
   const queryClient = useQueryClient();
 
@@ -66,7 +71,39 @@ const BlogAdminPanel = () => {
     "Performance",
   ];
 
-  // Fetch blogs with React Query
+  // Auth verification
+  const verifyAuth = async () => {
+    try {
+      const response = await axios.get(`${AUTH_API_URL}/verify`, {
+        withCredentials: true,
+        timeout: 10000,
+      });
+
+      if (response.data.valid) {
+        setIsAuthenticated(true);
+      } else {
+        setIsAuthenticated(false);
+        window.location.href = "/admin/login";
+      }
+    } catch (error) {
+      console.error("Auth verification error:", error);
+      setIsAuthenticated(false);
+      window.location.href = "/admin/login";
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // Login'den sonra auth verification
+    const timer = setTimeout(() => {
+      verifyAuth();
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Fetch blogs with React Query - DOĞRU ENDPOINT
   const {
     data: blogs = [],
     isLoading,
@@ -74,7 +111,7 @@ const BlogAdminPanel = () => {
   } = useQuery({
     queryKey: ["blogs"],
     queryFn: () =>
-      axios.get(API_URL).then((res) => {
+      axios.get(BLOG_API_URL, { withCredentials: true }).then((res) => {
         // Ensure data consistency and add missing fields
         return res.data
           .map((blog) => ({
@@ -89,6 +126,7 @@ const BlogAdminPanel = () => {
           .reverse();
       }),
     onError: () => setError("Bloglar yüklenirken hata oluştu."),
+    enabled: isAuthenticated, // Only fetch when authenticated
   });
 
   // Blog create/update mutation
@@ -112,9 +150,13 @@ const BlogAdminPanel = () => {
       };
 
       if (editingBlog) {
-        return axios.put(`${API_URL}/${editingBlog.id}`, processedData);
+        return axios.put(`${BLOG_API_URL}/${editingBlog.id}`, processedData, {
+          withCredentials: true,
+        });
       } else {
-        return axios.post(API_URL, processedData);
+        return axios.post(BLOG_API_URL, processedData, {
+          withCredentials: true,
+        });
       }
     },
     onSuccess: () => {
@@ -129,7 +171,10 @@ const BlogAdminPanel = () => {
 
   // Blog delete mutation
   const deleteMutation = useMutation({
-    mutationFn: (id) => axios.delete(`${API_URL}/${id}`),
+    mutationFn: (id) =>
+      axios.delete(`${BLOG_API_URL}/${id}`, {
+        withCredentials: true,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["blogs"] });
       setShowDeleteModal(null);
@@ -137,6 +182,24 @@ const BlogAdminPanel = () => {
     },
     onError: () => setError("Blog silinirken hata oluştu."),
   });
+
+  // Logout function
+  const handleLogout = async () => {
+    try {
+      await axios.post(
+        `${AUTH_API_URL}/logout`,
+        {},
+        {
+          withCredentials: true,
+        }
+      );
+      window.location.href = "/admin/login";
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Force redirect even if logout fails
+      window.location.href = "/admin/login";
+    }
+  };
 
   // Generate slug from title
   const generateSlug = (title) => {
@@ -224,6 +287,7 @@ const BlogAdminPanel = () => {
       return (
         <div className="error-container">
           <p>Bloglar yüklenirken hata oluştu.</p>
+          <button onClick={() => window.location.reload()}>Yeniden Dene</button>
         </div>
       );
     }
@@ -273,6 +337,24 @@ const BlogAdminPanel = () => {
     }
   };
 
+  // Auth loading screen
+  if (authLoading) {
+    return (
+      <div className="loading-container">
+        <p>Yetkilendirme kontrol ediliyor...</p>
+      </div>
+    );
+  }
+
+  // Not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="loading-container">
+        <p>Yönlendiriliyor...</p>
+      </div>
+    );
+  }
+
   return (
     <div>
       <Navbar />
@@ -286,7 +368,16 @@ const BlogAdminPanel = () => {
 
         <div className="admin-container">
           <Sidebar currentPage={currentPage} onPageChange={setCurrentPage} />
-          <main className="main-content">{renderCurrentPage()}</main>
+          <main className="main-content">
+            <div className="admin-header">
+              <h1>Admin Panel</h1>
+              <button onClick={handleLogout} className="logout-btn">
+                <LogOut size={16} />
+                Çıkış Yap
+              </button>
+            </div>
+            {renderCurrentPage()}
+          </main>
         </div>
 
         {showDeleteModal && (
