@@ -8,42 +8,118 @@ const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-console.log("🚀 Sunucu başlatılıyor...");
+console.log("Sunucu başlatılıyor...");
 
-// Basic middleware
-app.use(express.json());
+// Middleware
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+// CORS ayarları
 app.use(
   cors({
-    origin: "/", // Geçici olarak tüm origin'lere izin ver
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:3000",
+      "https://savteksitesi.onrender.com",
+    ],
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
   })
 );
 
-// Test endpoint
-app.get("/api/test", (req, res) => {
+// Health check endpoint
+app.get("/health", (req, res) => {
   res.json({
-    message: "API çalışıyor!",
-    timestamp: new Date(),
-    env: process.env.NODE_ENV,
+    status: "OK",
+    timestamp: new Date().toISOString(),
+    env: process.env.NODE_ENV || "development",
   });
 });
 
+// Route'ları güvenli şekilde yükle
+try {
+  console.log("Auth routes yükleniyor...");
+  const authRoutes = require("./routes/authRoutes");
+  app.use("/api/auth", authRoutes);
+  console.log("✓ Auth routes başarıyla yüklendi");
+} catch (error) {
+  console.error("✗ Auth routes yüklenirken hata:", error.message);
+  process.exit(1);
+}
+
+try {
+  console.log("Blog routes yükleniyor...");
+  const blogRoutes = require("./routes/blogRoutes");
+  app.use("/api/blogs", blogRoutes);
+  console.log("✓ Blog routes başarıyla yüklendi");
+} catch (error) {
+  console.error("✗ Blog routes yüklenirken hata:", error.message);
+  process.exit(1);
+}
+
 // Static files
-app.use(express.static(path.join(__dirname, "../Frontend/dist")));
+const staticPath = path.join(__dirname, "../Frontend/dist");
+console.log("Static dosya yolu:", staticPath);
+app.use(express.static(staticPath));
 
 // MongoDB bağlantısı
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ MongoDB bağlandı"))
-  .catch((err) => console.error("❌ MongoDB hatası:", err));
+if (!process.env.MONGO_URI) {
+  console.error("MONGO_URI environment variable bulunamadı!");
+  process.exit(1);
+}
 
-// Catch all
+mongoose
+  .connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => {
+    console.log("✓ MongoDB bağlantısı başarılı");
+  })
+  .catch((err) => {
+    console.error("✗ MongoDB bağlantı hatası:", err);
+    process.exit(1);
+  });
+
+// Catch-all handler - EN SONDA olmalı
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../Frontend/dist", "index.html"));
+  const indexPath = path.join(__dirname, "../Frontend/dist", "index.html");
+  console.log("Catch-all route tetiklendi:", req.path);
+  console.log("Index.html yolu:", indexPath);
+
+  res.sendFile(indexPath, (err) => {
+    if (err) {
+      console.error("index.html gönderilirken hata:", err);
+      res.status(500).send("Sayfa yüklenemedi");
+    }
+  });
 });
 
+// Global error handler
+app.use((error, req, res, next) => {
+  console.error("Global error:", error);
+  res.status(500).json({
+    message: "Sunucu hatası",
+    error:
+      process.env.NODE_ENV === "development"
+        ? error.message
+        : "Internal server error",
+  });
+});
+
+// Graceful shutdown
+process.on("SIGTERM", () => {
+  console.log("SIGTERM sinyali alındı, sunucu kapatılıyor...");
+  mongoose.connection.close(() => {
+    console.log("MongoDB bağlantısı kapatıldı");
+    process.exit(0);
+  });
+});
+
+// Sunucu başlat
 app.listen(PORT, () => {
-  console.log(`✅ Sunucu ${PORT} portunda çalışıyor`);
-  console.log(`🔗 Test URL: http://localhost:${PORT}/api/test`);
+  console.log(`🚀 Sunucu ${PORT} portunda çalışıyor`);
+  console.log(`🌍 Health check: http://localhost:${PORT}/health`);
 });

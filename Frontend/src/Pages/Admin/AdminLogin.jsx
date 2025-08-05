@@ -10,6 +10,12 @@ function AdminLogin() {
   const navigate = useNavigate();
   const [error, setError] = useState("");
 
+  // API Base URL - environment'a göre değişir
+  const API_BASE_URL =
+    process.env.NODE_ENV === "production"
+      ? "https://savteksitesi.onrender.com"
+      : "http://localhost:5000";
+
   // Particles effect
   const renderParticles = () => {
     const particles = [];
@@ -33,20 +39,37 @@ function AdminLogin() {
     e.preventDefault();
     setIsLoading(true);
     setError("");
-    //asdasda
+
     try {
+      console.log("Login attempt to:", `${API_BASE_URL}/api/auth/login`);
+
       const res = await axios.post(
-        "https://savteksitesi.onrender.com/api/auth/login",
+        `${API_BASE_URL}/api/auth/login`,
         { username, password },
-        { withCredentials: true } // Cookie için önemli
+        {
+          withCredentials: true, // Cookie için önemli
+          timeout: 10000, // 10 saniye timeout
+        }
       );
+
+      console.log("Login response:", res.data);
 
       if (res.data.message === "Giriş başarılı") {
         navigate("/admin/dashboard");
       }
     } catch (err) {
-      console.error(err);
-      setError("Giriş bilgileri hatalı.");
+      console.error("Login error:", err);
+
+      if (err.response) {
+        // Server response hatası
+        setError(err.response.data.message || "Giriş bilgileri hatalı.");
+      } else if (err.request) {
+        // Network hatası
+        setError("Bağlantı hatası. Lütfen tekrar deneyin.");
+      } else {
+        // Diğer hatalar
+        setError("Bir hata oluştu. Lütfen tekrar deneyin.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -74,6 +97,7 @@ function AdminLogin() {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             required
+            disabled={isLoading}
           />
           <svg
             className="input-icon"
@@ -97,6 +121,7 @@ function AdminLogin() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            disabled={isLoading}
           />
           <svg
             className="input-icon"
@@ -129,10 +154,24 @@ function AdminLogin() {
           >
             <path d="M9 12l2 2 4-4" />
             <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3" />
-            <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3" />
+            <path d="M3 12c1 0-3-1-3-3s-2-3-3-3-3 1-3 3 2 3 3 3" />
           </svg>
           <span>SSL ile güvenli bağlantı</span>
         </div>
+
+        {/* Debug bilgisi - production'da kaldırılabilir */}
+        {process.env.NODE_ENV === "development" && (
+          <div
+            style={{
+              marginTop: "10px",
+              fontSize: "12px",
+              color: "#666",
+              textAlign: "center",
+            }}
+          >
+            API URL: {API_BASE_URL}
+          </div>
+        )}
       </form>
     </div>
   );
