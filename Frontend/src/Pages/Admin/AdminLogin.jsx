@@ -10,11 +10,8 @@ function AdminLogin() {
   const navigate = useNavigate();
   const [error, setError] = useState("");
 
-  // API Base URL - environment'a göre değişir
-  const API_BASE_URL =
-    process.env.NODE_ENV === "production"
-      ? "https://savteksitesi.onrender.com"
-      : "http://localhost:5000";
+  // API Base URL - her zaman production URL kullan
+  const API_BASE_URL = "https://savteksitesi.onrender.com";
 
   // Particles effect
   const renderParticles = () => {
@@ -35,6 +32,19 @@ function AdminLogin() {
     return particles;
   };
 
+  // Sunucuyu uyandırma fonksiyonu
+  const wakeUpServer = async () => {
+    try {
+      console.log("Sunucu uyandırılıyor...");
+      await axios.get(`${API_BASE_URL}/health`, { timeout: 30000 });
+      console.log("Sunucu uyanık!");
+      return true;
+    } catch (error) {
+      console.log("Sunucu uyandırma denemesi:", error.message);
+      return false;
+    }
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -43,32 +53,61 @@ function AdminLogin() {
     try {
       console.log("Login attempt to:", `${API_BASE_URL}/api/auth/login`);
 
+      // Önce sunucuyu uyandır
+      await wakeUpServer();
+
+      // Biraz bekle
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
       const res = await axios.post(
         `${API_BASE_URL}/api/auth/login`,
         { username, password },
         {
-          withCredentials: true, // Cookie için önemli
-          timeout: 10000, // 10 saniye timeout
+          withCredentials: true,
+          timeout: 15000, // 15 saniye timeout
+          headers: {
+            "Content-Type": "application/json",
+          },
         }
       );
 
       console.log("Login response:", res.data);
 
       if (res.data.message === "Giriş başarılı") {
-        navigate("/admin/dashboard");
+        // Login başarılı, biraz bekle ve dashboard'a git
+        setTimeout(() => {
+          navigate("/admin/dashboard");
+        }, 1000);
       }
     } catch (err) {
       console.error("Login error:", err);
 
       if (err.response) {
         // Server response hatası
-        setError(err.response.data.message || "Giriş bilgileri hatalı.");
+        const status = err.response.status;
+        const message = err.response.data?.message || "Bilinmeyen hata";
+
+        if (status === 502) {
+          setError(
+            "Sunucu geçici olarak erişilemez durumda. Lütfen 30 saniye bekleyip tekrar deneyin."
+          );
+        } else if (status === 401) {
+          setError("Kullanıcı adı veya şifre hatalı.");
+        } else {
+          setError(`Sunucu hatası (${status}): ${message}`);
+        }
       } else if (err.request) {
         // Network hatası
-        setError("Bağlantı hatası. Lütfen tekrar deneyin.");
+        if (err.message.includes("ERR_BLOCKED_BY_CLIENT")) {
+          setError(
+            "Bağlantı engellenmiş. Ad blocker'ınızı kapatıp tekrar deneyin."
+          );
+        } else {
+          setError("Bağlantı hatası. İnternet bağlantınızı kontrol edin.");
+        }
       } else {
         // Diğer hatalar
-        setError("Bir hata oluştu. Lütfen tekrar deneyin.");
+        setError("Beklenmedik bir hata oluştu. Lütfen tekrar deneyin.");
       }
     } finally {
       setIsLoading(false);
@@ -87,7 +126,16 @@ function AdminLogin() {
           </p>
         </div>
 
-        {error && <div className="error-message">{error}</div>}
+        {error && (
+          <div className="error-message">
+            {error}
+            {error.includes("502") && (
+              <div style={{ marginTop: "10px", fontSize: "12px" }}>
+                Render sunucuları bazen uyku moduna girer. Lütfen bekleyin...
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="input-group">
           <input
@@ -140,7 +188,7 @@ function AdminLogin() {
 
         <button type="submit" className="submit-button" disabled={isLoading}>
           {isLoading && <div className="loading-spinner"></div>}
-          {isLoading ? "Giriş Yapılıyor..." : "Giriş Yap"}
+          {isLoading ? "Sunucu uyandırılıyor..." : "Giriş Yap"}
         </button>
 
         <div className="security-badge">
@@ -159,19 +207,17 @@ function AdminLogin() {
           <span>SSL ile güvenli bağlantı</span>
         </div>
 
-        {/* Debug bilgisi - production'da kaldırılabilir */}
-        {process.env.NODE_ENV === "development" && (
-          <div
-            style={{
-              marginTop: "10px",
-              fontSize: "12px",
-              color: "#666",
-              textAlign: "center",
-            }}
-          >
-            API URL: {API_BASE_URL}
-          </div>
-        )}
+        {/* Test Bilgisi */}
+        <div
+          style={{
+            marginTop: "15px",
+            fontSize: "12px",
+            color: "#666",
+            textAlign: "center",
+          }}
+        >
+          Test bilgileri: admin / 1234
+        </div>
       </form>
     </div>
   );
