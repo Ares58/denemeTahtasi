@@ -8,7 +8,7 @@ const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-console.log("Sunucu başlatılıyor...");
+console.log("🚀 Sunucu başlatılıyor...");
 
 // Middleware
 app.use(express.json({ limit: "10mb" }));
@@ -59,10 +59,29 @@ try {
   process.exit(1);
 }
 
-// Static files
+// Static files - SADECE production'da
 const staticPath = path.join(__dirname, "../Frontend/dist");
 console.log("Static dosya yolu:", staticPath);
-app.use(express.static(staticPath));
+
+// Static files middleware'i daha güvenli şekilde ekle
+try {
+  app.use(
+    express.static(staticPath, {
+      dotfiles: "deny",
+      etag: false,
+      extensions: ["htm", "html"],
+      index: false,
+      maxAge: "1d",
+      redirect: false,
+      setHeaders: function (res, path, stat) {
+        res.set("x-timestamp", Date.now());
+      },
+    })
+  );
+  console.log("✓ Static middleware eklendi");
+} catch (error) {
+  console.error("✗ Static middleware hatası:", error);
+}
 
 // MongoDB bağlantısı
 if (!process.env.MONGO_URI) {
@@ -83,11 +102,15 @@ mongoose
     process.exit(1);
   });
 
-// Catch-all handler - EN SONDA olmalı
-app.get("*", (req, res) => {
+// Catch-all handler - ÇOK DİKKATLİ!
+app.use((req, res, next) => {
+  // API route'ları için 404 döndür
+  if (req.path.startsWith("/api/")) {
+    return res.status(404).json({ message: "API endpoint bulunamadı" });
+  }
+
+  // React uygulaması için index.html gönder
   const indexPath = path.join(__dirname, "../Frontend/dist", "index.html");
-  console.log("Catch-all route tetiklendi:", req.path);
-  console.log("Index.html yolu:", indexPath);
 
   res.sendFile(indexPath, (err) => {
     if (err) {
@@ -116,6 +139,17 @@ process.on("SIGTERM", () => {
     console.log("MongoDB bağlantısı kapatıldı");
     process.exit(0);
   });
+});
+
+// Process hatalarını yakala
+process.on("uncaughtException", (error) => {
+  console.error("Uncaught Exception:", error);
+  process.exit(1);
+});
+
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("Unhandled Rejection at:", promise, "reason:", reason);
+  process.exit(1);
 });
 
 // Sunucu başlat
