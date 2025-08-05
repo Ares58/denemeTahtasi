@@ -15,7 +15,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: "*", // Geçici olarak tüm origin'lere izin ver
+    origin: "/", // Geçici olarak tüm origin'lere izin ver
     credentials: true,
   })
 );
