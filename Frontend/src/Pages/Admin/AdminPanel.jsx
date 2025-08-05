@@ -13,10 +13,16 @@ import "./components/Style/AdminPanel.css";
 
 // Environment-based API configuration
 const getApiBaseUrl = () => {
+  // Önce environment variable'ı kontrol et
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+
   // Production'da window.location.origin kullan
   if (window.location.hostname === "savteksitesi.onrender.com") {
     return "https://savteksitesi.onrender.com";
   }
+
   // Local development
   return "http://localhost:5000";
 };
