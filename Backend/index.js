@@ -15,35 +15,30 @@ const PORT = process.env.PORT || 5000;
 app.use(express.json());
 app.use(cookieParser());
 
-const allowedOrigins = [
-  "http://localhost:5173",
-  "https://savteksitesi.onrender.com",
-];
-
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: "https://savteksitesi.onrender.com", // Render'a deploy ettiysen burayı production domain ile değiştir
     credentials: true,
   })
 );
 
-// API route'ları
+// API route'ları - ÖNCELİKLE bunlar gelir
 app.use("/api/blogs", blogRoutes);
 app.use("/api/auth", authRoutes);
 
 // React'ın build edilmiş dosyalarını sun
 app.use(express.static(path.join(__dirname, "../Frontend/dist")));
 
-// Tüm diğer route'ları index.html'e yönlendir (React Router için)
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "../Frontend/dist", "index.html"));
-});
-
 // MongoDB bağlantısı
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB bağlantısı başarılı"))
   .catch((err) => console.error("MongoDB bağlantı hatası:", err));
+
+// Tüm diğer route'ları index.html'e yönlendir (React Router için) - EN SONDA
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../Frontend/dist", "index.html"));
+});
 
 // Sunucuyu başlat
 app.listen(PORT, () => {
