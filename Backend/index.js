@@ -5,42 +5,45 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const path = require("path");
 
-const blogRoutes = require("./routes/blogRoutes");
-const authRoutes = require("./routes/authRoutes");
-
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
+console.log("🚀 Sunucu başlatılıyor...");
+
+// Basic middleware
 app.use(express.json());
 app.use(cookieParser());
-
 app.use(
   cors({
-    origin: "https://savteksitesi.onrender.com", // Render'a deploy ettiysen burayı production domain ile değiştir
+    origin: "*", // Geçici olarak tüm origin'lere izin ver
     credentials: true,
   })
 );
 
-// API route'ları - ÖNCELİKLE bunlar gelir
-app.use("/api/blogs", blogRoutes);
-app.use("/api/auth", authRoutes);
+// Test endpoint
+app.get("/api/test", (req, res) => {
+  res.json({
+    message: "API çalışıyor!",
+    timestamp: new Date(),
+    env: process.env.NODE_ENV,
+  });
+});
 
-// React'ın build edilmiş dosyalarını sun
+// Static files
 app.use(express.static(path.join(__dirname, "../Frontend/dist")));
 
 // MongoDB bağlantısı
 mongoose
   .connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB bağlantısı başarılı"))
-  .catch((err) => console.error("MongoDB bağlantı hatası:", err));
+  .then(() => console.log("✅ MongoDB bağlandı"))
+  .catch((err) => console.error("❌ MongoDB hatası:", err));
 
-// Tüm diğer route'ları index.html'e yönlendir (React Router için) - EN SONDA
+// Catch all
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "../Frontend/dist", "index.html"));
 });
 
-// Sunucuyu başlat
 app.listen(PORT, () => {
-  console.log(`Sunucu ${PORT} portunda çalışıyor`);
+  console.log(`✅ Sunucu ${PORT} portunda çalışıyor`);
+  console.log(`🔗 Test URL: http://localhost:${PORT}/api/test`);
 });
