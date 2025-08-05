@@ -11,10 +11,25 @@ import Sidebar from "./components/Sidebar";
 import DeleteModal from "./components/DeleteModal";
 import "./components/Style/AdminPanel.css";
 
-// API URLs - Doğru endpoint'ler
-const API_BASE_URL = "https://savteksitesi.onrender.com";
+// Environment-based API configuration
+const getApiBaseUrl = () => {
+  // Production'da window.location.origin kullan
+  if (window.location.hostname === "savteksitesi.onrender.com") {
+    return "https://savteksitesi.onrender.com";
+  }
+  // Local development
+  return "http://localhost:5000";
+};
+
+const API_BASE_URL = getApiBaseUrl();
 const BLOG_API_URL = `${API_BASE_URL}/api/blogs`;
 const AUTH_API_URL = `${API_BASE_URL}/api/auth`;
+
+console.log("API Base URL:", API_BASE_URL); // Debug için
+
+// Axios default configuration
+axios.defaults.withCredentials = true;
+axios.defaults.timeout = 15000; // 15 saniye timeout
 
 // Form reducer for better state management
 const initialFormState = {
@@ -71,67 +86,118 @@ const BlogAdminPanel = () => {
     "Performance",
   ];
 
-  // Auth verification
+  // Improved auth verification with better error handling
   const verifyAuth = async () => {
     try {
+      console.log("Auth verification başlıyor...", AUTH_API_URL);
+
       const response = await axios.get(`${AUTH_API_URL}/verify`, {
         withCredentials: true,
         timeout: 10000,
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
+
+      console.log("Auth verification response:", response.data);
 
       if (response.data.valid) {
         setIsAuthenticated(true);
+        console.log("Authentication başarılı");
       } else {
+        console.log("Authentication başarısız - login'e yönlendiriliyor");
         setIsAuthenticated(false);
+        // Relative path kullan
         window.location.href = "/admin/login";
       }
     } catch (error) {
       console.error("Auth verification error:", error);
+
+      // Network error vs server error ayrımı
+      if (error.code === "ECONNABORTED") {
+        console.error("Timeout error");
+        setError("Bağlantı zaman aşımına uğradı. Lütfen tekrar deneyin.");
+      } else if (error.response) {
+        console.error(
+          "Server error:",
+          error.response.status,
+          error.response.data
+        );
+      } else if (error.request) {
+        console.error("Network error:", error.request);
+        setError(
+          "Sunucuya bağlanılamıyor. İnternet bağlantınızı kontrol edin."
+        );
+      }
+
       setIsAuthenticated(false);
-      window.location.href = "/admin/login";
+      // Production'da farklı davranış
+      if (window.location.hostname === "savteksitesi.onrender.com") {
+        setTimeout(() => {
+          window.location.href = "/admin/login";
+        }, 2000);
+      } else {
+        window.location.href = "/admin/login";
+      }
     } finally {
       setAuthLoading(false);
     }
   };
 
   useEffect(() => {
-    // Login'den sonra auth verification
-    const timer = setTimeout(() => {
-      verifyAuth();
-    }, 1000);
-
-    return () => clearTimeout(timer);
+    // Immediate auth verification - no delay needed
+    verifyAuth();
   }, []);
 
-  // Fetch blogs with React Query - DOĞRU ENDPOINT
+  // Fetch blogs with improved error handling
   const {
     data: blogs = [],
     isLoading,
     isError,
+    error: queryError,
   } = useQuery({
     queryKey: ["blogs"],
-    queryFn: () =>
-      axios.get(BLOG_API_URL, { withCredentials: true }).then((res) => {
-        // Ensure data consistency and add missing fields
-        return res.data
-          .map((blog) => ({
-            ...blog,
-            id: blog._id || blog.id,
-            views: blog.views || 0,
-            likes: blog.likes || 0,
-            status: blog.status || "draft",
-            tags: Array.isArray(blog.tags) ? blog.tags : [],
-            readTime: blog.readTime || calculateReadTime(blog.content || ""),
-          }))
-          .reverse();
-      }),
-    onError: () => setError("Bloglar yüklenirken hata oluştu."),
+    queryFn: async () => {
+      console.log("Blogs fetch başlıyor...", BLOG_API_URL);
+
+      const response = await axios.get(BLOG_API_URL, {
+        withCredentials: true,
+        timeout: 10000,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      console.log("Blogs fetch response:", response.data);
+
+      // Ensure data consistency and add missing fields
+      return response.data
+        .map((blog) => ({
+          ...blog,
+          id: blog._id || blog.id,
+          views: blog.views || 0,
+          likes: blog.likes || 0,
+          status: blog.status || "draft",
+          tags: Array.isArray(blog.tags) ? blog.tags : [],
+          readTime: blog.readTime || calculateReadTime(blog.content || ""),
+        }))
+        .reverse();
+    },
+    onError: (error) => {
+      console.error("Blogs fetch error:", error);
+      setError(
+        "Bloglar yüklenirken hata oluştu: " +
+          (error.message || "Bilinmeyen hata")
+      );
+    },
     enabled: isAuthenticated, // Only fetch when authenticated
+    retry: 3,
+    retryDelay: 1000,
   });
 
-  // Blog create/update mutation
+  // Blog create/update mutation with improved error handling
   const mutation = useMutation({
-    mutationFn: (blogData) => {
+    mutationFn: async (blogData) => {
       const processedData = {
         ...blogData,
         tags:
@@ -149,50 +215,79 @@ const BlogAdminPanel = () => {
         likes: editingBlog ? editingBlog.likes : 0,
       };
 
+      console.log(
+        "Blog mutation başlıyor...",
+        editingBlog ? "UPDATE" : "CREATE"
+      );
+
       if (editingBlog) {
         return axios.put(`${BLOG_API_URL}/${editingBlog.id}`, processedData, {
           withCredentials: true,
+          timeout: 10000,
         });
       } else {
         return axios.post(BLOG_API_URL, processedData, {
           withCredentials: true,
+          timeout: 10000,
         });
       }
     },
     onSuccess: () => {
+      console.log("Blog mutation başarılı");
       queryClient.invalidateQueries({ queryKey: ["blogs"] });
       dispatchForm({ type: "RESET" });
       setEditingBlog(null);
       setCurrentPage("blogs");
       setError("");
     },
-    onError: () => setError("Blog kaydedilirken hata oluştu."),
+    onError: (error) => {
+      console.error("Blog mutation error:", error);
+      setError(
+        "Blog kaydedilirken hata oluştu: " +
+          (error.response?.data?.message || error.message || "Bilinmeyen hata")
+      );
+    },
   });
 
-  // Blog delete mutation
+  // Blog delete mutation with improved error handling
   const deleteMutation = useMutation({
-    mutationFn: (id) =>
-      axios.delete(`${BLOG_API_URL}/${id}`, {
+    mutationFn: async (id) => {
+      console.log("Blog delete başlıyor...", id);
+      return axios.delete(`${BLOG_API_URL}/${id}`, {
         withCredentials: true,
-      }),
+        timeout: 10000,
+      });
+    },
     onSuccess: () => {
+      console.log("Blog delete başarılı");
       queryClient.invalidateQueries({ queryKey: ["blogs"] });
       setShowDeleteModal(null);
       setError("");
     },
-    onError: () => setError("Blog silinirken hata oluştu."),
+    onError: (error) => {
+      console.error("Blog delete error:", error);
+      setError(
+        "Blog silinirken hata oluştu: " +
+          (error.response?.data?.message || error.message || "Bilinmeyen hata")
+      );
+    },
   });
 
-  // Logout function
+  // Improved logout function
   const handleLogout = async () => {
     try {
+      console.log("Logout başlıyor...");
+
       await axios.post(
         `${AUTH_API_URL}/logout`,
         {},
         {
           withCredentials: true,
+          timeout: 5000,
         }
       );
+
+      console.log("Logout başarılı");
       window.location.href = "/admin/login";
     } catch (error) {
       console.error("Logout error:", error);
@@ -287,7 +382,17 @@ const BlogAdminPanel = () => {
       return (
         <div className="error-container">
           <p>Bloglar yüklenirken hata oluştu.</p>
-          <button onClick={() => window.location.reload()}>Yeniden Dene</button>
+          <p style={{ fontSize: "0.9rem", color: "#666", marginTop: "0.5rem" }}>
+            {queryError?.message || "Bilinmeyen hata"}
+          </p>
+          <button
+            onClick={() => {
+              setError("");
+              queryClient.invalidateQueries({ queryKey: ["blogs"] });
+            }}
+          >
+            Yeniden Dene
+          </button>
         </div>
       );
     }
@@ -342,6 +447,9 @@ const BlogAdminPanel = () => {
     return (
       <div className="loading-container">
         <p>Yetkilendirme kontrol ediliyor...</p>
+        <p style={{ fontSize: "0.9rem", color: "#666", marginTop: "0.5rem" }}>
+          API: {API_BASE_URL}
+        </p>
       </div>
     );
   }
@@ -351,6 +459,17 @@ const BlogAdminPanel = () => {
     return (
       <div className="loading-container">
         <p>Yönlendiriliyor...</p>
+        {error && (
+          <p
+            style={{
+              fontSize: "0.9rem",
+              color: "#ef4444",
+              marginTop: "0.5rem",
+            }}
+          >
+            {error}
+          </p>
+        )}
       </div>
     );
   }
@@ -371,6 +490,16 @@ const BlogAdminPanel = () => {
           <main className="main-content">
             <div className="admin-header">
               <h1>Admin Panel</h1>
+              <div
+                style={{
+                  fontSize: "0.8rem",
+                  color: "#666",
+                  marginRight: "auto",
+                  marginLeft: "1rem",
+                }}
+              >
+                API: {API_BASE_URL}
+              </div>
               <button onClick={handleLogout} className="logout-btn">
                 <LogOut size={16} />
                 Çıkış Yap
